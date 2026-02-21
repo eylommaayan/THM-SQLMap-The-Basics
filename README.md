@@ -1,5 +1,6 @@
 # THM-SQLMap-The-Basics
 SQLMap הוא כלי קוד פתוח המיועד לאוטומציה של זיהוי וניצול חולשות מסוג SQL Injection (SQLi). במקום להזין ידנית גרשיים ופקודות SQL מורכבות, הכלי עושה זאת עבורנו במהירות וביעילות.  למה הוא כל כך חזק? תמיכה רחבה: עובד עם כמעט כל סוגי מסדי הנתונים (MySQL, PostgreSQL, Oracle, MSSQL ועוד).
+* <img width="1780" height="856" alt="image" src="https://github.com/user-attachments/assets/6c06dc84-62f2-4542-914e-618a67b87416" />
 
 
 בשמחה! נראה שאתה עובד על בניית מדריך (PT (Penetration Testing ב-GitHub עבור החדר של SQLMap ב-TryHackMe.
@@ -46,7 +47,7 @@ SQLMap הוא כלי קוד פתוח המיועד לאוטומציה של זיה
 *
 * .
 *
-* <img width="1780" height="856" alt="image" src="https://github.com/user-attachments/assets/6c06dc84-62f2-4542-914e-618a67b87416" />
+
 
 
 
