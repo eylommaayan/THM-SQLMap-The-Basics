@@ -185,6 +185,93 @@ sqlmap -r request.txt
 <img width="1788" height="479" alt="image" src="https://github.com/user-attachments/assets/5a17fded-0187-45a9-9f62-06eb32d0a411" />
 
 
+המטרה שלנו היא לנצל פגיעות SQL Injection בדף התחברות (Login) שמשתמש בבקשות מסוג GET, אך מסתיר את הפרמטרים מה-URL הראשוני. נשתמש בכלי הסטנדרטי בתעשייה, SQLMap, כדי לשאוב מידע מבסיס הנתונים.
+
+שלב 1: איסוף הנתונים (Enumeration)
+לפני שנריץ את הכלים הכבדים, אנחנו צריכים את הכתובת המלאה שכוללת את הפרמטרים שנשלחים לשרת. כפי שצוין, הכתובת היא:
+http://10.113.167.35/ai/includes/user_login?email=test&password=test
+
+בשביל להשיג גישה לאתר נזין נתונים מומצאים כמו שם משתמש וסיסימא chack
+
+<img width="1857" height="837" alt="image" src="https://github.com/user-attachments/assets/f191c99f-d062-4df9-a1ce-a3adf30f6839" />
+נקבל את ה-get של האתר נעתיק את הכתובת לטרמינל ונריץ sqlmap
+
+<img width="1880" height="886" alt="image" src="https://github.com/user-attachments/assets/07b5c813-e397-41fb-b3d9-fd3c4f77ed1c" />
+
+
+שלב 2: זיהוי בסיסי הנתונים (Databases)
+נריץ סריקה עמוקה כדי לגלות כמה בסיסי נתונים קיימים בשרת. שימו לב לתוספת --level=5 כדי להבטיח סריקה יסודית.
+
+הפקודה:
+
+Bash
+sqlmap -u 'http://10.113.167.35/ai/includes/user_login?email=test&password=test' --level=5 --dbs
+מה הפקודה עושה? הסיומת --dbs אומרת ל-SQLMap להציג את רשימת בסיסי הנתונים (Databases).
+
+במהלך ההרצה: תתבקשו לענות על שאלות (השיבו y או n לפי ההנחיות במשימה).
+
+תשובה לשאלה 1: לאחר סיום הסריקה, ספרו כמה בסיסי נתונים מופיעים תחת ה-output. (בדרך כלל תראו information_schema ובסיסי נתונים של האפליקציה).
+
+<img width="1900" height="847" alt="image" src="https://github.com/user-attachments/assets/4735e350-6b66-4937-a4dc-24e7f0f311eb" />
+
+שלב 3: חשיפת טבלאות בתוך בסיס הנתונים "ai"
+עכשיו כשאנחנו יודעים שיש בסיס נתונים בשם ai, בואו נראה אילו טבלאות הוא מכיל.
+
+הפקודה:
+
+Bash
+sqlmap -u 'http://10.113.167.35/ai/includes/user_login?email=test&password=test' --level=5 -D ai --tables
+-D ai: מגדיר ל-SQLMap לעבוד על בסיס הנתונים הספציפי בשם ai.
+
+--tables: מבקש רשימה של כל הטבלאות בתוך אותו DB.
+
+תשובה לשאלה 2: חפשו את שם הטבלה שמופיע בתוצאות (לרוב משהו כמו users או שם דומה).
+
+שלב 4: שליפת נתונים (Dumping)
+המטרה הסופית היא להוציא את הסיסמה של המשתמש test@chatai.com. אנחנו צריכים לבדוק מה יש בתוך הטבלה שמצאנו.
+
+הפקודה (נניח ששם הטבלה הוא users):
+
+Bash
+sqlmap -u 'http://10.113.167.35/ai/includes/user_login?email=test&password=test' --level=5 -D ai -T users --dump
+-T users: מציין את שם הטבלה (החליפו במידה והשם שמצאתם שונה).
+
+--dump: מוריד את כל התוכן של הטבלה למסך שלכם.
+
+תשובה לשאלה 3: חפשו בטבלה המודפסת את השורה שבה מופיע האימייל test@chatai.com והעתיקו את הסיסמה (Password) שמופיעה לצידו.
+
+טיפים למקצוענים (Pro-Tips):
+חיסכון בזמן: אם אתם כבר יודעים שהפרמטר הפגיע הוא email, תוכלו להוסיף -p email לפקודה כדי ש-SQLMap יתמקד רק בו.
+
+Batch Mode: אם לא בא לכם ללחוץ על y כל הזמן, הוסיפו --batch והכלי יבחר את ברירות המחדל באופן אוטומטי.
+
+<img width="1607" height="729" alt="image" src="https://github.com/user-attachments/assets/133c1164-ff01-42fc-a5c9-21e9d2877046" />
+
+sqlmap -u 'http://10.10.4.209/ai/includes/user_login?email=test&password=test' -D ai -T user --dump
+
+פירוט החלקים:
+
+-D ai: מציין ל-SQLMap להשתמש בבסיס הנתונים שמצאת בשלב הקודם (השם הוא ai).
+
+-T user: מציין את שם הטבלה הספציפית שזיהית (השם הוא user, כפי שמופיע בטבלה המאוירת בתמונה הראשונה).
+
+--dump: זו פקודת ה"פיצוח". היא מורה לכלי להוציא את כל הרשומות (שורות) מתוך הטבלה ולהציג אותן על המסך.
+
+2. מה יקרה אחרי שתלחץ Enter?
+SQLMap יתחיל לשלוף את הנתונים. אם יש הרבה משתמשים, זה עשוי לקחת רגע. בסיום, תופיע על המסך טבלה מסודרת עם עמודות כמו id, email, ו-password.
+
+כדי למצוא את הסיסמה של test@chatai.com:
+
+חפש בטבלה שתודפס את השורה שבה מופיע האימייל הזה.
+
+הסיסמה תופיע בעמודה המקבילה באותה שורה.
+
+3. שאלות נפוצות בזמן ההרצה
+ייתכן ש-SQLMap ישאל אותך שאלות תוך כדי ה-Dump. מומלץ לענות כך כדי לא להיתקע:
+
+"Do you want to store hashes to a temporary file...?" – השב N (אלא אם אתה רוצה לשמור אותם בצד).
+
+"Do you want to crack them via a dictionary-based attack?" – אם הסיסמאות מוצפנות (Hashes), השב Y כדי ש-SQLMap ינסה לפצח אותן עבורך באופן אוטומטי.
 
 *
 
